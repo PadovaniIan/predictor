@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MLB Skew Predictor</title>
+<style>
+:root{--bg:#f7f7f5;--card:#fff;--fg:#1c1c1a;--mut:#6b6b66;--line:#e2e2dd;--a:#1f6feb;--b:#d9480f}
+@media(prefers-color-scheme:dark){:root{--bg:#161615;--card:#20201e;--fg:#ecece8;--mut:#9a9a93;--line:#34342f;--a:#5aa0ff;--b:#ff8a55}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,sans-serif}
+main{max-width:900px;margin:0 auto;padding:20px 16px 48px}h1{font-size:22px;margin:0 0 2px}h2{font-size:16px;margin:0 0 10px}
+.sub{color:var(--mut);font-size:13px;margin-bottom:18px}.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:16px}
+.row{display:flex;gap:12px;flex-wrap:wrap}.row>*{flex:1 1 220px}select{width:100%;padding:8px;font:inherit;background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:6px}
+.bar{display:flex;height:34px;border-radius:6px;overflow:hidden;margin:14px 0 6px;font-weight:600;color:#fff}
+.bar div{display:flex;align-items:center;padding:0 10px;white-space:nowrap}.bar .a{background:var(--a)}.bar .b{background:var(--b);justify-content:flex-end}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:13px;color:var(--mut)}.stats b{color:var(--fg)}
+table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line)}th{color:var(--mut);font-weight:500;cursor:pointer}td.n,th.n{text-align:right}
+svg{width:100%;height:auto;display:block}.note{color:var(--mut);font-size:12px}.tag{font-size:11px;padding:1px 6px;border:1px solid var(--line);border-radius:10px;color:var(--mut)}
+</style></head><body><main>
+<h1>MLB Skew Predictor</h1>
+<div class="sub" id="meta">Loading…</div>
+<div class="card"><div class="row"><div><label class="note">Team A</label><select id="a"></select></div><div><label class="note">Team B</label><select id="b"></select></div></div>
+<div id="res"></div></div>
+<div class="card"><h2>Today's slate</h2><div id="slate" class="note">—</div></div>
+<div class="card"><h2>Team strength ranking <span class="note">(mode of each team's fitted wOBA/FIP curve)</span></h2><table id="tbl"></table></div>
+<p class="note" id="foot"></p>
+</main>
+<script>
+const $=id=>document.getElementById(id), f=(x,d=3)=>x.toFixed(d);
+fetch('data.json').then(r=>r.json()).then(D=>{
+  const T=Object.fromEntries(D.teams.map(t=>[t.id,t]));
+  const bt=D.backtest, acc=bt.accuracy==null?'n/a':(bt.accuracy*100).toFixed(1)+'% over '+bt.n+' games';
+  $('meta').textContent=`${D.season} season · ${D.games} games · updated ${D.updated.replace('T',' ')} UTC · walk-forward accuracy ${acc}`;
+  const opts=D.teams.map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
+  $('a').innerHTML=opts;$('b').innerHTML=opts;$('b').selectedIndex=1;
+  const pA=(a,b)=>a<b?D.pairs[a+'-'+b]:1-D.pairs[b+'-'+a];
+  function chart(A,B){
+    const W=700,H=220,m=28,xs=D.xs,X=i=>m+i/(xs.length-1)*(W-2*m),Y=v=>H-m-v*(H-2*m);
+    const path=(c,col)=>`<path d="${c.map((v,i)=>(i?'L':'M')+X(i).toFixed(1)+' '+Y(v).toFixed(1)).join('')}" fill="none" stroke="${col}" stroke-width="2.5"/>`;
+    const ticks=[0,.1,.2,.3,.4].map(v=>{const i=xs.findIndex(x=>x>=v-1e-9);return `<text x="${X(i)}" y="${H-8}" font-size="11" text-anchor="middle" fill="currentColor" opacity=".6">${v}</text>`}).join('');
+    return `<svg viewBox="0 0 ${W} ${H}"><line x1="${m}" y1="${H-m}" x2="${W-m}" y2="${H-m}" stroke="currentColor" opacity=".25"/>${ticks}${path(A.curve,'var(--a)')}${path(B.curve,'var(--b)')}</svg><div class="note">Scaled strength curves (peak = 1). X axis: game strength = wOBA ÷ FIP.</div>`;
+  }
+  const st=t=>`<div><b>${t.name}</b><br>mode ${f(t.mode)} · mean ${f(t.mean)}<br>transform: ${t.method} · skew ${f(t.skew,2)}<br>${t.used}/${t.games} games used${t.broadened?' · broadened':''}${t.games<20?' <span class="tag">small sample</span>':''}</div>`;
+  function show(){
+    const a=+$('a').value,b=+$('b').value; if(a===b){$('res').innerHTML='<p class="note">Pick two different teams.</p>';return}
+    const p=pA(a,b),A=T[a],B=T[b];
+    $('res').innerHTML=`<div class="bar"><div class="a" style="width:${p*100}%">${(p*100).toFixed(1)}%</div><div class="b" style="width:${(1-p)*100}%">${((1-p)*100).toFixed(1)}%</div></div>
+      <div class="stats">${st(A)}${st(B)}</div>${chart(A,B)}`;
+  }
+  $('a').onchange=$('b').onchange=show; show();
+  $('slate').innerHTML=D.slate.length?`<table>${D.slate.map(g=>{const h=T[g.home],a=T[g.away];
+    if(!h||!a)return '';const p=pA(g.home,g.away);return `<tr><td>${a.name} @ <b>${h.name}</b></td><td class="n">${h.name.split(' ').pop()} ${(p*100).toFixed(0)}% · ${a.name.split(' ').pop()} ${((1-p)*100).toFixed(0)}%</td></tr>`}).join('')}</table>`:'No upcoming games listed.';
+  $('tbl').innerHTML='<tr><th>#</th><th>Team</th><th class="n">Mode</th><th class="n">Mean</th><th class="n">Games used</th></tr>'+
+    D.teams.map((t,i)=>`<tr><td>${i+1}</td><td>${t.name}</td><td class="n">${f(t.mode)}</td><td class="n">${f(t.mean)}</td><td class="n">${t.used}/${t.games}</td></tr>`).join('');
+  $('foot').textContent=`Each game: team wOBA ÷ team FIP for that game. Lowest and highest ${D.trim*100}% of a team's games are dropped before fitting. Home field, starting pitchers and opponent quality are not modeled.`;
+}).catch(e=>{$('meta').textContent='Could not load data.json: '+e});
+</script></body></html>
