@@ -1,17 +1,17 @@
 {
  "season": 2025,
- "synthetic": true,
- "generated_utc": "2026-09-30T19:32:10+00:00",
- "data_fetched_utc": "2026-09-30T19:32:09+00:00",
- "games_final": 1440,
- "games_scheduled": 1485,
+ "synthetic": false,
+ "generated_utc": "2026-09-30T20:05:15+00:00",
+ "data_fetched_utc": "2026-09-30T20:05:15+00:00",
+ "games_final": 2464,
+ "games_scheduled": 2464,
  "context": {
-  "fip_constant": 5.2167,
-  "league_woba": 0.32382,
-  "league_fip_numer_per_ip": 0.8834,
-  "league_mean_strength_raw": 0.056859,
-  "relative_scale_factor": 1758.7256,
-  "team_games": 2880
+  "fip_constant": 3.128,
+  "league_woba": 0.31115,
+  "league_fip_numer_per_ip": 1.02335,
+  "league_mean_strength_raw": 0.085389,
+  "relative_scale_factor": 1171.1081,
+  "team_games": 4860
  },
  "config": {
   "season": 2025,
