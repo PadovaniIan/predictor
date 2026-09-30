@@ -22,8 +22,8 @@
   "relative_scale": true,
   "relative_scale_comment": "Rescale strength to 100 = league mean for the season (principle 2: forecasted values must be relativistic; also moves values off the 0<x<1 domain where log10 goes negative).",
   "prefilter": {
-    "trim_low_pct": 0.01,
-    "trim_high_pct": 0.01,
+    "trim_low_pct": 0.1,
+    "trim_high_pct": 0.1,
     "comment": "As specified: drop bottom 10% and top 10% of each team's strength values. Skew before/after trimming is reported per team so you can see how much signal the trim removes."
   },
   "window": 10,
