@@ -29,16 +29,35 @@ def main():
     store = {"season": season, "teams": [], "games": {}, "schedule": [],
              "league_pitching_totals": {}, "synthetic": False}
     if os.path.exists(path):
+        cached = None
         try:
-            store.update(json.load(open(path)))
+            cached = json.load(open(path))
         except json.JSONDecodeError:
-            pass
+            print("[fetch] cache unreadable, starting fresh")
+        # Never merge demo data into real data: make_synthetic.py uses its own
+        # team ids (100-129) and gamePks (700000+), which collide with real MLB
+        # ids and would silently survive into the model while synthetic:false
+        # hid the warning banner on the site.
+        if cached and cached.get("synthetic"):
+            print("[fetch] discarding synthetic demo cache")
+            cached = None
+        if cached and cached.get("season") != season:
+            print(f"[fetch] cache is season {cached.get('season')}, want {season} - starting fresh")
+            cached = None
+        if cached:
+            store.update(cached)
 
     print(f"[fetch] season {season} gameType {gt}")
     store["teams"] = api.teams(season)
     store["schedule"] = api.schedule(season, gt)
     store["league_pitching_totals"] = api.league_pitching_totals(season, gt)
     print(f"[fetch] {len(store['teams'])} teams, {len(store['schedule'])} scheduled games")
+
+    # Drop cached team keys that are not in the live team list (stale ids).
+    live_ids = {str(t["id"]) for t in store["teams"]}
+    for stale in [k for k in store["games"] if k not in live_ids]:
+        print(f"[fetch] dropping stale team id {stale}")
+        del store["games"][stale]
 
     added = 0
     for t in store["teams"]:

@@ -15,16 +15,32 @@ Port of the **Skewed Distribution Algorithm for Practiced Task Performance Forec
 
 ## Setup (about five minutes)
 
-1. Create a repo and drop these files in the root.
-2. **Settings -> Pages -> Build and deployment -> Source: "Deploy from a branch"**, branch `main`, folder `/ (root)`.
-3. **Settings -> Actions -> General -> Workflow permissions -> "Read and write permissions"**
-   (the refresh job commits the regenerated data back to the repo).
-4. Set `"season"` in `config.json` to the season you want.
-5. Actions -> `refresh` -> **Run workflow** to populate real data immediately. After that it runs
-   itself at 12:20 UTC daily.
+1. Push these files to the root of a repo, on the **default branch** (`main`). Scheduled workflows
+   only run from the default branch.
+2. Set `"season"` in `config.json` to the season you want, and commit it.
+3. **Settings -> Actions -> General -> Workflow permissions -> "Read and write permissions"** -> Save.
+   Without this the refresh job fetches and computes fine but fails on `git push` with a 403.
+4. **Settings -> Pages -> Build and deployment -> Source: "Deploy from a branch"**, branch `main`,
+   folder `/ (root)` -> Save.
+5. **Actions** tab -> `refresh` in the left sidebar -> **Run workflow** -> **Run workflow**.
+   Takes about a minute. After this it runs itself daily at 12:20 UTC.
+6. Open `https://<user>.github.io/<repo>/` and confirm the yellow demo-data banner is **gone**.
 
 The repo ships with synthetic demo data so the page renders before your first real refresh. The
-site shows a loud banner whenever it is displaying synthetic numbers.
+site shows a loud banner whenever it is displaying synthetic numbers, and the workflow's
+"Verify" step fails the run rather than publishing demo data by accident.
+
+### Troubleshooting
+
+| Symptom | Cause / fix |
+|---|---|
+| No `refresh` in the Actions sidebar | `.github/workflows/refresh.yml` is not on the default branch, or Actions is disabled (Settings -> Actions -> General -> "Allow all actions") |
+| No **Run workflow** button | Same - `workflow_dispatch` is only offered for workflows present on the default branch |
+| Commit step fails, `remote: Permission to ... denied` / 403 | Step 3 not done |
+| Run is green but the site still shows old numbers | The Pages build has not run yet. Check for a `pages-build-deployment` run in the Actions tab after the data commit; hard-refresh the page |
+| Yellow demo banner still showing | The run did not reach the commit step, or Pages has not rebuilt |
+| Cron never fires | GitHub disables scheduled workflows after 60 days of repo inactivity - it emails you, and the Actions tab shows an "Enable workflow" button |
+| Cron fires late | Normal; GitHub queues scheduled jobs and can delay them under load |
 
 ## Local use
 
