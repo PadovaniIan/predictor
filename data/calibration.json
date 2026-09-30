@@ -1,8 +1,8 @@
 {
- "a": 0.38627,
- "b": 0.075039,
- "n": 2127,
- "fitted_utc": "2026-09-30T20:37:47+00:00",
- "holdout_brier_raw": 0.2458,
- "holdout_brier_calibrated": 0.2451
+ "a": 0.126468,
+ "b": 0.142779,
+ "n": 2280,
+ "fitted_utc": "2026-09-30T20:55:26+00:00",
+ "holdout_brier_raw": 0.286,
+ "holdout_brier_calibrated": 0.2467
 }
