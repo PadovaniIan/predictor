@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MLB Skewed Distribution Forecast</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <h1>MLB Skewed&nbsp;Distribution Forecast</h1>
+    <p class="sub">Padovani skewed-distribution algorithm (v2.1.2025) ported from FRC to Major League Baseball.
+       Team strength = per-game wOBA &divide; per-game FIP, indexed to league&nbsp;=&nbsp;100.</p>
+    <div id="stamp" class="stamp"></div>
+    <div id="synthbanner" class="banner hidden">
+      <strong>Demo data.</strong> These numbers come from <code>scripts/make_synthetic.py</code>, not the MLB Stats API.
+      Run the refresh workflow to replace them with real games.
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+<section id="kpis" class="cards"></section>
+
+<section>
+  <h2>1 &middot; Team strength ratings</h2>
+  <p class="note">Mode is the damped most-probable strength: the intersection of the scaled normal and scaled
+     skew-adjusted curves between their peaks. Band is the variance bound from the outer two intersections.
+     <em>Skew</em> shows the value before and after the 10%/10% pre-filter &mdash; watch how much signal the trim removes.</p>
+  <div class="tablewrap"><table id="ranktable"><thead><tr>
+    <th data-k="rank">#</th><th data-k="name">Team</th><th data-k="mode">Mode</th>
+    <th data-k="band_lo">Band</th><th data-k="mu">&mu;</th><th data-k="sigma">&sigma;</th>
+    <th data-k="skew_before_trim">Skew raw</th><th data-k="skew_after_trim">Skew trimmed</th>
+    <th data-k="method">Adjust</th><th data-k="skew_of_adjusted">Skew adj</th>
+    <th data-k="n_used">n used</th><th data-k="games">Games</th>
+  </tr></thead><tbody></tbody></table></div>
+</section>
+
+<section>
+  <h2>2 &middot; Distribution viewer</h2>
+  <div class="row">
+    <label>Team <select id="teamsel"></select></label>
+    <span class="legend"><i class="sw n"></i>scaled normal <i class="sw s"></i>scaled skew-adjusted <i class="sw d"></i>damped</span>
+  </div>
+  <canvas id="curve" height="330"></canvas>
+  <div id="curveinfo" class="kv"></div>
+  <h3>Per-game strength, in order played</h3>
+  <canvas id="spark" height="150"></canvas>
+</section>
+
+<section>
+  <h2>3 &middot; Matchup</h2>
+  <div class="row">
+    <label>Away <select id="awaysel"></select></label>
+    <label>Home <select id="homesel"></select></label>
+  </div>
+  <div id="mresult" class="mresult"></div>
+  <canvas id="mcurve" height="300"></canvas>
+  <p class="note">Win probability is <code>P(strength<sub>A</sub> &gt; strength<sub>B</sub>)</code>, computed from the two damped
+     densities as a ratio of integrals (eq&nbsp;5), then passed through the logistic recalibration in
+     <code>data/calibration.json</code> if present.</p>
+</section>
+
+<section>
+  <h2>4 &middot; Upcoming games</h2>
+  <div id="upcoming" class="games"></div>
+</section>
+
+<section>
+  <h2>5 &middot; Does it actually work here?</h2>
+  <div id="evalbox"></div>
+  <h3>Calibration</h3>
+  <canvas id="calplot" height="300"></canvas>
+  <p class="note">The first principle of a hybrid system is that an absolute result is impossible, so calibration
+     matters more than raw accuracy. A well-behaved model sits on the diagonal.</p>
+</section>
+
+<footer class="wrap">
+  <p>Static site &mdash; all numbers precomputed into <code>/data</code> by GitHub Actions, nothing to host but files.
+     Algorithm: <em>Skewed Distribution Algorithm for Practiced Task Performance Forecasting</em>, Ian Padovani, FRC&nbsp;Team&nbsp;4206.</p>
+</footer>
+</main>
+<script src="assets/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,62 @@
+{
+ "season": 2025,
+ "synthetic": true,
+ "generated_utc": "2026-09-30T19:13:17+00:00",
+ "data_fetched_utc": "2026-09-30T19:05:18+00:00",
+ "games_final": 1440,
+ "games_scheduled": 1485,
+ "context": {
+  "fip_constant": 5.2167,
+  "league_woba": 0.32382,
+  "league_fip_numer_per_ip": 0.8834,
+  "league_mean_strength_raw": 0.056859,
+  "relative_scale_factor": 1758.7256,
+  "team_games": 2880
+ },
+ "config": {
+  "season": 2025,
+  "game_type": "R",
+  "woba_weights": {
+   "comment": "Update each offseason from FanGraphs 'Guts!' table for the season being modeled.",
+   "wBB": 0.69,
+   "wHBP": 0.72,
+   "w1B": 0.88,
+   "w2B": 1.24,
+   "w3B": 1.57,
+   "wHR": 2.01
+  },
+  "fip_constant": null,
+  "fip_constant_comment": "null = auto-derive cFIP from league season totals (lgERA - lgFIP_raw). Set a number to override.",
+  "shrinkage": {
+   "prior_innings": 3.0,
+   "prior_pa": 10.0,
+   "comment": "Adds k innings / k PA of league-average performance to each single-game sample. This is the stabilizer that keeps single-game FIP positive and bounded. TUNE THIS EXPERIMENTALLY - it is the MLB analogue of the paper's experimentally-optimized pre-filter."
+  },
+  "fip_floor": 1.0,
+  "fip_floor_comment": "Hard guard. Single-game FIP can legitimately go negative (0 HR, 0 BB, 12 K); wOBA/FIP is undefined near zero and the paper's log/sqrt/reciprocal adjustments require strictly positive input.",
+  "relative_scale": true,
+  "relative_scale_comment": "Rescale strength to 100 = league mean for the season (principle 2: forecasted values must be relativistic; also moves values off the 0<x<1 domain where log10 goes negative).",
+  "prefilter": {
+   "trim_low_pct": 0.1,
+   "trim_high_pct": 0.1,
+   "comment": "As specified: drop bottom 10% and top 10% of each team's strength values. Skew before/after trimming is reported per team so you can see how much signal the trim removes."
+  },
+  "window": null,
+  "window_comment": "null = use all games this season. Set an integer (e.g. 60) to use only the most recent N games per team. The paper puts the crossover where curve-fitting beats this approximation at ~100 data points - a 162 game season exceeds that.",
+  "distribution": {
+   "grid_points": 1200,
+   "max_cutoff_pct": 0.95,
+   "sigma_adj_mode": "auto",
+   "sigma_adj_comment": "'paper' = eq(10) sqrt(|mu_base^2 - mu_adj^2|); 'direct' = stdev of the adjusted array; 'auto' = eq(10) unless it disagrees with 'direct' by more than 5x, then fall back. See METHOD.md, open question #1.",
+   "damping": "min",
+   "damping_comment": "'min' = pointwise minimum of the scaled normal and scaled skew-adjusted curves. Its peak is exactly the between-peaks intersection and its shoulders are the outer intersections, reproducing the paper's mode + variance-bound construction."
+  },
+  "prediction": {
+   "min_games": 20,
+   "home_field_logit": 0.0,
+   "home_field_comment": "0.0 = pure algorithm. MLB home teams win ~54% of games (logit ~0.16). Leave at 0 for a clean viability read, then test whether adding it improves the Brier score.",
+   "calibration": "auto",
+   "calibration_comment": "'auto' = apply the logistic recalibration in data/calibration.json when it exists (fitted by scripts/evaluate.py on completed games). Raw P(strength_A > strength_B) is over-dispersed for single MLB games - the distributions describe performance spread, not the extra run-scoring luck that decides one game. Set to 'off' to see the unrecalibrated algorithm."
+  }
+ }
+}
