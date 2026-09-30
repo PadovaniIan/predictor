@@ -40,7 +40,7 @@
     "min_games": 10,
     "home_field_logit": 0.16,
     "home_field_comment": "0.0 = pure algorithm. MLB home teams win ~54% of games (logit ~0.16). Leave at 0 for a clean viability read, then test whether adding it improves the Brier score.",
-    "calibration": "auto",
+    "calibration": "off",
     "calibration_comment": "'auto' = apply the logistic recalibration in data/calibration.json when it exists (fitted by scripts/evaluate.py on completed games). Raw P(strength_A > strength_B) is over-dispersed for single MLB games - the distributions describe performance spread, not the extra run-scoring luck that decides one game. Set to 'off' to see the unrecalibrated algorithm."
   }
 }
