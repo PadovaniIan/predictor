@@ -1,0 +1,68 @@
+name: refresh
+
+on:
+  schedule:
+    # 12:20 UTC daily = 08:20 ET, after every North American night game is final.
+    # GitHub queues cron jobs and may start them late under load; this is fine,
+    # the job is idempotent.
+    - cron: "20 12 * * *"
+  workflow_dispatch:          # gives you the "Run workflow" button in the Actions tab
+
+permissions:
+  contents: write             # the job commits regenerated data back to the repo
+
+concurrency:
+  group: refresh              # a manual run and the cron run can never race
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      # No pip install step: every script is standard library only.
+
+      - name: Fetch game logs from the MLB Stats API
+        run: python3 scripts/fetch_data.py
+
+      - name: Compute strength series and skewed distributions
+        run: python3 scripts/compute.py
+
+      - name: Backtest, score the prediction log, refit calibration
+        run: python3 scripts/evaluate.py
+
+      - name: Price upcoming games
+        run: python3 scripts/predict.py
+
+      - name: Verify the site is not about to publish demo data
+        run: |
+          python3 - <<'PY'
+          import json, sys
+          m = json.load(open("data/meta.json"))
+          if m.get("synthetic"):
+              sys.exit("meta.json still flagged synthetic - real fetch did not take effect")
+          ok = sum(1 for t in json.load(open("data/teams.json")) if t["ok"])
+          print(f"season {m['season']}: {m['games_final']} games final, {ok} teams modelled")
+          PY
+
+      - name: Commit refreshed data
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data
+          if git diff --quiet --cached; then
+            echo "no data changes"
+            exit 0
+          fi
+          git commit -m "data refresh $(date -u +'%Y-%m-%d %H:%M UTC')"
+          for i in 1 2 3; do
+            git push && exit 0
+            echo "push rejected, rebasing and retrying ($i/3)"
+            git pull --rebase --autostash origin "${GITHUB_REF_NAME}"
+          done
+          exit 1
