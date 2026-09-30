@@ -22,11 +22,11 @@
   "relative_scale": true,
   "relative_scale_comment": "Rescale strength to 100 = league mean for the season (principle 2: forecasted values must be relativistic; also moves values off the 0<x<1 domain where log10 goes negative).",
   "prefilter": {
-    "trim_low_pct": 0.1,
-    "trim_high_pct": 0.1,
+    "trim_low_pct": 0.01,
+    "trim_high_pct": 0.01,
     "comment": "As specified: drop bottom 10% and top 10% of each team's strength values. Skew before/after trimming is reported per team so you can see how much signal the trim removes."
   },
-  "window": 20,
+  "window": 10,
   "window_comment": "null = use all games this season. Set an integer (e.g. 60) to use only the most recent N games per team. The paper puts the crossover where curve-fitting beats this approximation at ~100 data points - a 162 game season exceeds that.",
   "distribution": {
     "grid_points": 1200,
@@ -37,7 +37,7 @@
     "damping_comment": "'min' = pointwise minimum of the scaled normal and scaled skew-adjusted curves. Its peak is exactly the between-peaks intersection and its shoulders are the outer intersections, reproducing the paper's mode + variance-bound construction."
   },
   "prediction": {
-    "min_games": 20,
+    "min_games": 10,
     "home_field_logit": 0.16,
     "home_field_comment": "0.0 = pure algorithm. MLB home teams win ~54% of games (logit ~0.16). Leave at 0 for a clean viability read, then test whether adding it improves the Brier score.",
     "calibration": "auto",
