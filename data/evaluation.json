@@ -1,5 +1,5 @@
 {
- "generated_utc": "2026-10-01T18:25:51+00:00",
+ "generated_utc": "2026-10-02T17:53:19+00:00",
  "synthetic": false,
  "walk_forward": {
   "n": 2280,
@@ -179,7 +179,7 @@
   "a": 0.126468,
   "b": 0.142779,
   "n": 2280,
-  "fitted_utc": "2026-10-01T18:25:51+00:00",
+  "fitted_utc": "2026-10-02T17:53:19+00:00",
   "holdout_brier_raw": 0.286,
   "holdout_brier_calibrated": 0.2467
  },
